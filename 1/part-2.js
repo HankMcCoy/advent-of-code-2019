@@ -1,7 +1,7 @@
 const path = require('path')
-const { readNumberLines } = require('../h')
+const { readLines } = require('../h')
 
-const masses = readNumberLines(path.join(__dirname, './input.txt'))
+const masses = readLines(path.join(__dirname, './input.txt'))
 
 const getFuel = mass => {
 	const fuel = Math.floor(mass / 3) - 2
