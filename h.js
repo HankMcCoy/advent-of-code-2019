@@ -32,3 +32,10 @@ const answer = result => {
 	console.log(`\n🎉🎉🎉${result} 🎉🎉🎉`)
 }
 exports.answer = answer
+
+const invariant = predicate => {
+	if (!predicate) {
+		throw new Error('WTF MAN')
+	}
+}
+exports.invariant = invariant

@@ -1,34 +1,34 @@
-const { test, answer } = require('../h')
+const { test, answer, invariant } = require('../h')
 
-const isValidPassword = num => {
-	const digits = num
+const getDigits = num =>
+	num
 		.toString()
 		.split('')
 		.map(x => parseInt(x, 10))
 
-	if (digits.length !== 6) {
-		return false
-	}
+const isValidPassword = num => {
+	const digits = getDigits(num)
+	invariant(digits.length === 6)
 
-	let hasPair = false
-	let prev = digits[0]
-	let prevCount = 1
-	for (let i = 1; i < digits.length; i++) {
-		if (digits[i] === prev) {
-			prevCount += 1
-			if (prevCount > 2) {
-				return false
-			}
+	const groups = digits.reduce((groups, digit) => {
+		const curGroup = groups[groups.length - 1]
+		if (curGroup && curGroup.digit === digit) {
+			curGroup.count += 1
 		} else {
-			prev = digits[i]
-			prevCount = 1
+			groups.push({
+				digit,
+				count: 1,
+			})
 		}
-		hasPair = hasPair || digits[i - 1] === digits[i]
-		if (digits[i - 1] > digits[i]) {
-			return false
-		}
-	}
-	return hasPair
+		return groups
+	}, [])
+
+	return (
+		// At least one digit pair
+		groups.some(g => g.count === 2) &&
+		// Every digit must be greater than or equal to the previous
+		groups.every((g, i) => i === 0 || groups[i - 1].digit < g.digit)
+	)
 }
 
 test(isValidPassword(111111), false)
@@ -49,6 +49,7 @@ function getValidPasswords(min, max) {
 }
 
 test(getValidPasswords(122333, 122340), [
+	122333,
 	122334,
 	122335,
 	122336,
