@@ -13,9 +13,9 @@ function readLines(path, { parseNumbers } = { parseNumbers: true }) {
 }
 exports.readLines = readLines
 
-function readCommaLists(path, { parseNumbers } = {}) {
+function readCommaLists(path, { parseNumbers } = { parseNumbers: true }) {
 	return readLines(path, { parseNumbers: false })
 		.map(line => line.split(','))
-		.map(list => list.map(x => parseInt(x, 10)))
+		.map(list => list.map(x => (parseNumbers ? parseInt(x, 10) : x)))
 }
 exports.readCommaLists = readCommaLists
