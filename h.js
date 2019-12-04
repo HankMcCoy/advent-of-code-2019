@@ -1,21 +1,34 @@
+const _ = require('lodash')
 const fs = require('fs')
 
-function readFile(path) {
-	return fs.readFileSync(path, { encoding: 'utf8' })
-}
+const readFile = path => fs.readFileSync(path, { encoding: 'utf8' })
 exports.readFile = readFile
 
-function readLines(path, { parseNumbers } = { parseNumbers: true }) {
-	return readFile(path)
+const readLines = (path, { parseNumbers } = { parseNumbers: true }) =>
+	readFile(path)
 		.split('\n')
 		.filter(x => x)
 		.map(x => (parseNumbers ? parseInt(x, 10) : x))
-}
 exports.readLines = readLines
 
-function readCommaLists(path, { parseNumbers } = { parseNumbers: true }) {
-	return readLines(path, { parseNumbers: false })
+const readCommaLists = (path, { parseNumbers } = { parseNumbers: true }) =>
+	readLines(path, { parseNumbers: false })
 		.map(line => line.split(','))
 		.map(list => list.map(x => (parseNumbers ? parseInt(x, 10) : x)))
-}
 exports.readCommaLists = readCommaLists
+
+const test = (actual, expected) => {
+	if (_.isEqual(actual, expected)) {
+		console.log('👍🏻')
+	} else {
+		console.error('💩')
+		console.error('\tEXPECTED:\t', expected)
+		console.error('\tACTUAL:\t', actual)
+	}
+}
+exports.test = test
+
+const answer = result => {
+	console.log(`\n🎉🎉🎉${result} 🎉🎉🎉`)
+}
+exports.answer = answer
