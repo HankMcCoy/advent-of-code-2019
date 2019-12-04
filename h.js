@@ -22,8 +22,8 @@ const test = (actual, expected) => {
 		console.log('👍🏻')
 	} else {
 		console.error('💩')
-		console.error('\tEXPECTED:\t', expected)
-		console.error('\tACTUAL:\t', actual)
+		console.error('- EXPECTED: ', expected)
+		console.error('- ACTUAL:   ', actual)
 	}
 }
 exports.test = test
