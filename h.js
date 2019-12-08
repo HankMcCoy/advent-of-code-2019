@@ -42,10 +42,8 @@ exports.invariant = invariant
 
 const getPermutations = curPhases => {
 	return curPhases.length > 1
-		? _.flatten(
-				curPhases.map(p1 =>
-					getPermutations(_.without(curPhases, p1)).map(p2 => [p1, ...p2])
-				)
+		? _.flatMap(curPhases, p1 =>
+				getPermutations(_.without(curPhases, p1)).map(p2 => [p1, ...p2])
 		  )
 		: [curPhases]
 }
