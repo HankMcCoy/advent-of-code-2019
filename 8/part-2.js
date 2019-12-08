@@ -19,13 +19,12 @@ const toIdx = (x, y) => y * WIDTH + x
 for (let y = 0; y < HEIGHT; y++) {
 	console.log(
 		range(0, WIDTH - 1)
-			.map(x =>
-				layers.reduce(
-					(c, l) => (c === TRANSPARENT ? l[toIdx(x, y)] : c),
-					TRANSPARENT
-				)
-			)
-			.map(c => (c === WHITE ? 'X' : ' '))
+			.map(x => {
+				const applyLayerColor = (curColor, layer) =>
+					curColor === TRANSPARENT ? layer[toIdx(x, y)] : curColor
+				return layers.reduce(applyLayerColor, TRANSPARENT)
+			})
+			.map(c => (c === WHITE ? '⬜️' : '  '))
 			.join('')
 	)
 }
