@@ -1,8 +1,6 @@
-const co = require('co')
 const _ = require('lodash')
 const path = require('path')
-const { Transform } = require('stream')
-const { readCommaLists, test, answer } = require('../h')
+const { readCommaLists, test, answer, getPermutations, range } = require('../h')
 
 const [origInput] = readCommaLists(path.join(__dirname, './input.txt'))
 
@@ -34,16 +32,9 @@ const parseInstruction = instruction => {
 	return [opCode, modes]
 }
 
-const compute = async function(
-	tape,
-	getInput = () => {
-		throw new Error('Oops!')
-	},
-	outputStream
-) {
+const compute = function*(tape, getInput, writeOutput) {
 	// Make a copy of the tape, to mutate
 	tape = tape.slice(0)
-	const inputGen = getInput()
 
 	let pos = 0
 	while (true) {
@@ -68,13 +59,12 @@ const compute = async function(
 				break
 
 			case OpCode.INPUT:
-				const input = (await inputGen.next()).value
-				tape[getDest(0)] = input
+				tape[getDest(0)] = getInput()
 				pos += 2
 				break
 
 			case OpCode.OUTPUT:
-				outputStream.write(getParam(0))
+				yield writeOutput(getParam(0))
 				pos += 2
 				break
 
@@ -97,7 +87,6 @@ const compute = async function(
 				break
 
 			case OpCode.END:
-				outputStream.end()
 				return
 
 			default:
@@ -108,122 +97,55 @@ const compute = async function(
 	}
 }
 
-const createInput = (initialInputs, prevAmpOutput) => {
-	return async function*() {
-		for (const i of initialInputs) {
-			yield i
-		}
-		for await (const output of prevAmpOutput) {
-			yield output
-		}
-	}
-}
-const createOutput = () => {
-	const stream = new Transform({
-		transform(data, encoding, callback) {
-			callback(null, data)
-		},
-		objectMode: true,
-	})
-	return stream
-}
-
-const onFinalValue = (stream, cb) => {
-	let lastVal
-	stream.on('data', val => {
-		lastVal = val
-	})
-	stream.on('finish', () => {
-		cb(lastVal)
-	})
-}
-
+const NUM_AMPS = 5
+const LAST_AMP = NUM_AMPS - 1
+const amps = range(0, LAST_AMP)
 function getThrust(phases, tape) {
-	const outputs = new Array(5).fill().map(() => createOutput())
-	const inputs = phases.map((p, i) => {
-		return i === 0
-			? createInput([p, 0], outputs[4])
-			: createInput([p], outputs[i - 1])
-	})
+	const queues = amps.map(i => (i === 0 ? [phases[0], 0] : [phases[i]]))
+	const inputQueue = i => queues[i]
+	const outputQueue = i => (i === LAST_AMP ? queues[0] : queues[i + 1])
 
-	return new Promise((resolve, reject) => {
-		for (let i = 0; i < 5; i++) {
-			compute(tape, inputs[i], outputs[i])
+	const computations = amps.map(i => {
+		const getInput = () => inputQueue(i).shift()
+		const writeOutput = val => {
+			outputQueue(i).push(val)
 		}
-		onFinalValue(_.last(outputs), thrust => resolve(thrust))
+		return compute(tape, getInput, writeOutput)
 	})
+
+	let states = new Array(NUM_AMPS).fill('RUNNING')
+	while (states.includes('RUNNING')) {
+		states = computations.map(g => (g.next().done ? 'DONE' : 'RUNNING'))
+	}
+
+	return outputQueue(LAST_AMP)[0]
 }
 
-const getPermutations = curPhases => {
-	return curPhases.length > 1
-		? _.flatten(
-				curPhases.map(p1 =>
-					getPermutations(_.without(curPhases, p1)).map(p2 => [p1, ...p2])
-				)
-		  )
-		: [curPhases]
-}
-
-const phasePermutations = getPermutations([5, 6, 7, 8, 9])
-async function getMaxThrust(tape) {
-	const thrusts = await Promise.all(
-		phasePermutations.map(phaseSeq => getThrust(phaseSeq, tape))
-	)
+const phasePermutations = getPermutations(range(5, 9))
+function getMaxThrust(tape) {
+	const thrusts = phasePermutations.map(phaseSeq => getThrust(phaseSeq, tape))
 	return _.max(thrusts)
 }
 
-/*
-getMaxThrust(origInput)
-	.then(answer)
-	.catch(e => {
-		console.error(e)
-		process.exit(1)
-	})
-*/
+test(
+	getThrust(
+		[9, 8, 7, 6, 5],
+		// prettier-ignore
+		[3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,
+		27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5]
+	),
+	139629729
+)
 
-getThrust(
-	[9, 8, 7, 6, 5],
-	[
-		3,
-		26,
-		1001,
-		26,
-		-4,
-		26,
-		3,
-		27,
-		1002,
-		27,
-		2,
-		27,
-		1,
-		27,
-		26,
-		27,
-		4,
-		27,
-		1001,
-		28,
-		-1,
-		28,
-		1005,
-		28,
-		6,
-		99,
-		0,
-		0,
-		5,
-	]
-).then(thrust => {
-	test(thrust, 139629729)
-})
-/*
-getThrust([5, 6, 7, 8, 9], origInput)
-	.then(thrust => {
-		console.log('DONE', thrust)
-	})
-	.catch(e => {
-		console.error(e)
-		process.exit(1)
-	})
-	*/
+test(
+	getThrust(
+		[9, 7, 8, 5, 6],
+		// prettier-ignore
+		[3,52,1001,52,-5,52,3,53,1,52,56,54,1007,54,5,55,1005,55,26,1001,54,
+		-5,54,1105,1,12,1,53,54,53,1008,54,0,55,1001,55,1,55,2,53,55,53,4,
+		53,1001,56,-1,56,1005,56,6,99,0,0,0,0,10]
+	),
+	18216
+)
+
+answer(getMaxThrust(origInput))
