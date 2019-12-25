@@ -37,7 +37,16 @@ const getVisibility = (curCoord, otherCoords) => {
 
 const getVisibilityMap = asteroidRows => {
 	const asteroids = getAsteroids(asteroidRows)
-	return asteroids.map(a => getVisibility(a, asteroids))
+	return asteroids.map(a => ({
+		coord: a,
+		visibility: getVisibility(a, asteroids),
+	}))
 }
 
-answer(Math.max(...getVisibilityMap(input)))
+const visibilityMap = getVisibilityMap(input)
+const bestSpot = visibilityMap.reduce(
+	(best, spot) => (!best || best.visibility < spot.visibility ? spot : best),
+	null
+)
+
+console.log(bestSpot)
