@@ -13,8 +13,6 @@ const getAngle = (c1, c2) => {
 	return (Math.atan2(dy, dx) * 180) / Math.PI
 }
 const normalizeAngle = a => wrap(360, a + 90)
-test(normalizeAngle(90), 0)
-test(normalizeAngle(0), 90)
 
 const getDist = (c1, c2) => {
 	const [dx, dy] = getDelta(c1, c2)
@@ -63,11 +61,10 @@ const shootABunchOfAsteroids = asteroidRows => {
 	let i = 0
 	let numExploded = 0
 	while (numExploded < 200) {
-		const { angle, coords: targetedAsteroids } = asteroidsByAngle[
+		const { coords: targetedAsteroids } = asteroidsByAngle[
 			wrap(asteroidsByAngle.length, i)
 		]
 		if (targetedAsteroids.length) {
-			console.log('BOOM', angle, targetedAsteroids.length)
 			blownUp = targetedAsteroids.shift()
 			numExploded += 1
 		}
