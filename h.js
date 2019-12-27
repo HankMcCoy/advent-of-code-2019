@@ -53,3 +53,6 @@ function range(min, max) {
 	return new Array(max - min + 1).fill().map((__, i) => i + min)
 }
 exports.range = range
+
+const wrap = (m, n) => (n >= 0 ? n % m : ((n % m) + m) % m)
+exports.wrap = wrap
